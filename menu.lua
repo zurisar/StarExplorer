@@ -37,13 +37,16 @@ function scene:create( event )
 	local sceneGroup = self.view
 	-- Code here runs when the scene is first created but has not yet appeared on screen
 
-	local background = display.newImageRect( sceneGroup, "background.png", 800, 1400 )
+	local background = display.newImageRect( sceneGroup, "graphics/background1.png", 800, 1400 )
 	background.x = display.contentCenterX
 	background.y = display.contentCenterY
+	
+	local tintback = display.newRoundedRect( sceneGroup, display.contentCenterX, display.contentCenterY, 550, 950, 25 )
+	tintback:setFillColor( 0, 0, 0, 0.85 )
 
 	local title = display.newImageRect( sceneGroup, "title.png", 500, 80 )
 	title.x = display.contentCenterX
-	title.y = 200
+	title.y = 150
 
 	local playButton = display.newText( sceneGroup, "Play", display.contentCenterX, 700, native.systemFont, 44 )
 	playButton:setFillColor( 0.82, 0.86, 1 )
@@ -57,7 +60,7 @@ function scene:create( event )
 	highScoresButton:addEventListener( "tap", gotoHighScores )
 	settingsButton:addEventListener( "tap", gotoSettings )
 
-	musicTrack = audio.loadStream( "audio/Escape_Looping.wav" )
+	musicTrack = audio.loadStream( "audio/368770__furbyguy__8-bit-bass-lead.mp3" )
 end
 
 

@@ -80,11 +80,14 @@ function scene:create( event )
 	-- Save the scores
 	saveScores()
 
-	local background = display.newImageRect( sceneGroup, "background.png", 800, 1400 )
+	local background = display.newImageRect( sceneGroup, "graphics/background2.png", 800, 1400 )
 	background.x = display.contentCenterX
 	background.y = display.contentCenterY
+	
+	local tintback = display.newRoundedRect( sceneGroup, display.contentCenterX, display.contentCenterY, 550, 950, 25 )
+	tintback:setFillColor( 0, 0, 0, 0.85 )
 
-	local highScoresHeader = display.newText( sceneGroup, "High Scores", display.contentCenterX, 100, native.systemFont, 44 )
+	local highScoresHeader = display.newText( sceneGroup, "High Scores", display.contentCenterX, 150, native.systemFont, 44 )
 
 	for i = 1, 10 do
 		if ( scoresTable[i] ) then
@@ -119,7 +122,7 @@ function scene:create( event )
 	menuButton:setFillColor( 0.75, 0.78, 1 )
 	menuButton:addEventListener( "tap", gotoMenu )
 
-	musicTrack = audio.loadStream( "audio/Midnight-Crawlers_Looping.wav" )
+	musicTrack = audio.loadStream( "audio/270366__foolboymedia__dramatic-scroller.mp3" )
 end
 
 

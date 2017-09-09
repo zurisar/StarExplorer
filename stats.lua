@@ -14,6 +14,9 @@ local totalShots = composer.getVariable("totalShots")
 local totalHits = composer.getVariable("totalHits")
 local totalAccuracy = composer.getVariable("totalAccuracy")
 local totalTime = composer.getVariable("totalTime")
+local startDifficulty = composer.getVariable("startDifficulty")
+local totalDifficulty = composer.getVariable("totalDifficulty")
+local rank
 
 -- We need some variables for time
 local totalMins
@@ -37,6 +40,9 @@ else
 	end
 end
 
+-- Calculate rank
+rank = ( ( totalDifficulty - startDifficulty ) * totalAccuracy )  / 10
+
 
 
 function finishGame()
@@ -54,16 +60,18 @@ function scene:create( event )
 
 	local sceneGroup = self.view
 	-- Code here runs when the scene is first created but has not yet appeared on screen
-	display.newRect(sceneGroup, display.contentCenterX, display.contentCenterY, display.contentWidth, display.contentHeight):setFillColor(37/255, 39/255, 46/255, 0.7);
+	display.newRect(sceneGroup, display.contentCenterX, display.contentCenterY, display.contentWidth, display.contentHeight):setFillColor(37/255, 39/255, 46/255, 0.9);
 	local okButton = display.newText( sceneGroup, "OK", display.contentCenterX, display.contentCenterY + 400, native.systemFont, 42 )
-	local statsHeader = display.newText( sceneGroup, "Statistics", display.contentCenterX, display.contentCenterY - 400, native.systemFont, 42 )
+	local statsHeader = display.newText( sceneGroup, "Statistics", display.contentCenterX, display.contentCenterY - 380, native.systemFont, 42 )
 	
 	-- Output our stats
-	local yourScoreText = display.newText( sceneGroup, "Your score: " .. finalScore, display.contentCenterX, display.contentCenterY - 300, native.systemFont, 32 )
-	local totalShotsText = display.newText( sceneGroup, "Shots: " .. totalShots, display.contentCenterX, display.contentCenterY - 250, native.systemFont, 32 )
-	local totalHitsText = display.newText( sceneGroup, "Hits: " .. totalHits, display.contentCenterX, display.contentCenterY - 200, native.systemFont, 32 )
-	local totalAccuracyText = display.newText( sceneGroup, "Accuracy: " .. totalAccuracy .. "%", display.contentCenterX, display.contentCenterY - 150, native.systemFont, 32 )
-	local totalTimeText = display.newText( sceneGroup, "Time: " .. totalMins .. " mins " .. totalSecs .. " secs", display.contentCenterX, display.contentCenterY - 100, native.systemFont, 32 )
+	local yourRankText = display.newText( sceneGroup, "Your rank: " .. rank, display.contentCenterX, display.contentCenterY - 300, native.systemFont, 36 )
+	local yourScoreText = display.newText( sceneGroup, "Your score: " .. finalScore, display.contentCenterX, display.contentCenterY - 250, native.systemFont, 32 )
+	local totalShotsText = display.newText( sceneGroup, "Shots: " .. totalShots, display.contentCenterX, display.contentCenterY - 200, native.systemFont, 32 )
+	local totalHitsText = display.newText( sceneGroup, "Hits: " .. totalHits, display.contentCenterX, display.contentCenterY - 150, native.systemFont, 32 )
+	local totalAccuracyText = display.newText( sceneGroup, "Accuracy: " .. totalAccuracy .. "%", display.contentCenterX, display.contentCenterY - 100, native.systemFont, 32 )
+	local totalDifficultyText = display.newText( sceneGroup, "Reached difficulty: " .. totalDifficulty, display.contentCenterX, display.contentCenterY - 50, native.systemFont, 32 )
+	local totalTimeText = display.newText( sceneGroup, "Time: " .. totalMins .. " mins " .. totalSecs .. " secs", display.contentCenterX, display.contentCenterY, native.systemFont, 32 )
 	
 	okButton:addEventListener( "tap", finishGame )
 end

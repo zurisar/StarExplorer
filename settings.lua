@@ -90,9 +90,12 @@ function scene:create( event )
 	-- Load settings
 	loadSettings()
 	
-	local background = display.newImageRect( sceneGroup, "background.png", 800, 1400 )
+	local background = display.newImageRect( sceneGroup, "graphics/background3.png", 800, 1400 )
 	background.x = display.contentCenterX
 	background.y = display.contentCenterY
+	
+	local tintback = display.newRoundedRect( sceneGroup, display.contentCenterX, display.contentCenterY, 550, 950, 25 )
+	tintback:setFillColor( 0, 0, 0, 0.85 )
 
 	local settingsHeader = display.newText( sceneGroup, "Settings", display.contentCenterX, 100, native.systemFont, 44 )
 	
@@ -108,11 +111,11 @@ function scene:create( event )
 	difficultySlider = widget.newSlider( { x = display.contentCenterX + 150, y = 400, width = 200, value = difficulty * 10, listener = difficultySliderListener } )
 	sceneGroup:insert(difficultySlider)
 
-	local menuButton = display.newText( sceneGroup, "Menu", display.contentCenterX, 810, native.systemFont, 44 )
+	local menuButton = display.newText( sceneGroup, "Menu", display.contentCenterX, 920, native.systemFont, 44 )
 	menuButton:setFillColor( 0.75, 0.78, 1 )
 	menuButton:addEventListener( "tap", gotoMenu )
 
-	musicTrack = audio.loadStream( "audio/Midnight-Crawlers_Looping.wav" )
+	musicTrack = audio.loadStream( "audio/270366__foolboymedia__dramatic-scroller.mp3" )
 end
 
 

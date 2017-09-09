@@ -25,4 +25,20 @@ settings =
 			UILaunchStoryboardName = "LaunchScreen",
 		},
 	},
+	plugins =
+	{
+		["plugin.gpgs"] = 
+		{
+			publisherId = "com.coronalabs",
+			supportedPlatforms = { android = true }
+		},
+	},
+	android =
+	{
+		googlePlayGamesAppId = "",
+		usesPermissions =
+		{
+			"com.android.vending.CHECK_LICENSE"
+		},
+	},
 }
