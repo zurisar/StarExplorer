@@ -2,15 +2,25 @@ Music and sounds
 
 frankum
 Electronic music intro
+electro-pop 01 loop
 freesound.org
 
 furbyguy
 8 Bit Bass & Lead
 freesound.org
 
-FoolBoyMedia
-Dramatic Scroller
-freesound.org - NC!
+zagi2
+falling birds perc. loop
+freesound.org
+
+edtijo
+Happy 8bit Pixel Adenture
+freesound.org
+
+timgormly
+8-bit Explosion1
+freesound.org
+
 
 Artworks
 
@@ -20,4 +30,8 @@ OpenGameArt.org
 
 Rawdanitsu
 Ship sprites
+OpenGameArt.org
+
+Master484
+Laser sprites
 OpenGameArt.org

@@ -9,6 +9,8 @@ local scene = composer.newScene()
 -- -----------------------------------------------------------------------------------
 local isDebug = composer.getVariable("isDebug")
 
+local clickSound
+
 local finalScore = composer.getVariable("finalScore")
 local totalShots = composer.getVariable("totalShots")
 local totalHits = composer.getVariable("totalHits")
@@ -41,14 +43,11 @@ else
 end
 
 -- Calculate rank
-rank = ( ( totalDifficulty - startDifficulty ) * totalAccuracy )  / 10
-
-
+rank = ( ( ( totalDifficulty - startDifficulty ) * totalAccuracy )  / 10 ) * ( finalScore / 10000 )
 
 function finishGame()
-
+	audio.play( clickSound, { channel = 4 } )
 	composer.gotoScene( "highscores", { time=800, effect="crossFade" } )
-
 end
 
 -- -----------------------------------------------------------------------------------
@@ -74,6 +73,8 @@ function scene:create( event )
 	local totalTimeText = display.newText( sceneGroup, "Time: " .. totalMins .. " mins " .. totalSecs .. " secs", display.contentCenterX, display.contentCenterY, native.systemFont, 32 )
 	
 	okButton:addEventListener( "tap", finishGame )
+	
+	clickSound = audio.loadSound( "audio/button-click.wav" )
 end
 
 

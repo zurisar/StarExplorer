@@ -10,22 +10,33 @@ local scene = composer.newScene()
 
 -- Initialize variables
 local musicTrack
+local clickSound
 
-
-
-
+-- GOTO functions
 local function gotoGame()
+	audio.play( clickSound, { channel = 4 } )
 	composer.gotoScene( "game", { time=800, effect="crossFade" } )
 end
 
 local function gotoHighScores()
+	audio.play( clickSound, { channel = 4 } )
 	composer.gotoScene( "highscores", { time=800, effect="crossFade" } )
 end
 
 local function gotoSettings()
+	audio.play( clickSound, { channel = 4 } )
 	composer.gotoScene( "settings", { time=800, effect="crossFade" } )
 end
 
+local function gotoCredits()
+	audio.play( clickSound, { channel = 4 } )
+	composer.gotoScene( "credits", { time=800, effect="crossFade" } )
+end
+
+local function showHelp()
+	audio.play( clickSound, { channel = 4 } )
+	composer.showOverlay ( "help", { isModal=true, time=400, effect="fade" } )
+end
 
 -- -----------------------------------------------------------------------------------
 -- Scene event functions
@@ -44,22 +55,28 @@ function scene:create( event )
 	local tintback = display.newRoundedRect( sceneGroup, display.contentCenterX, display.contentCenterY, 550, 950, 25 )
 	tintback:setFillColor( 0, 0, 0, 0.85 )
 
-	local title = display.newImageRect( sceneGroup, "title.png", 500, 80 )
-	title.x = display.contentCenterX
-	title.y = 150
+	local title = display.newImageRect( sceneGroup, "graphics/title.png", 600, 500 )
+	title.x = display.contentCenterX + 15
+	title.y = display.contentCenterY - 250
 
-	local playButton = display.newText( sceneGroup, "Play", display.contentCenterX, 700, native.systemFont, 44 )
+	local playButton = display.newText( sceneGroup, "Play", display.contentCenterX, 600, native.systemFont, 44 )
 	playButton:setFillColor( 0.82, 0.86, 1 )
 
-	local highScoresButton = display.newText( sceneGroup, "High Scores", display.contentCenterX, 810, native.systemFont, 44 )
+	local highScoresButton = display.newText( sceneGroup, "High Scores", display.contentCenterX, 710, native.systemFont, 44 )
 	highScoresButton:setFillColor( 0.75, 0.78, 1 )
 	
-	local settingsButton = display.newText( sceneGroup, "Settings", display.contentCenterX, 920, native.systemFont, 44 )
+	local settingsButton = display.newText( sceneGroup, "Settings", display.contentCenterX, 820, native.systemFont, 44 )
+	settingsButton:setFillColor( 0.75, 0.78, 1 )
+	
+	local helpButton = display.newText( sceneGroup, "Help", display.contentCenterX, 930, native.systemFont, 44 )
+	helpButton:setFillColor( 0.75, 0.78, 1 )
 
 	playButton:addEventListener( "tap", gotoGame )
 	highScoresButton:addEventListener( "tap", gotoHighScores )
 	settingsButton:addEventListener( "tap", gotoSettings )
+	helpButton:addEventListener( "tap", showHelp )
 
+	clickSound = audio.loadSound( "audio/button-click.wav" )
 	musicTrack = audio.loadStream( "audio/368770__furbyguy__8-bit-bass-lead.mp3" )
 end
 

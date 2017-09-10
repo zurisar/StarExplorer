@@ -12,45 +12,6 @@ local physics = require( "physics" )
 physics.start()
 physics.setGravity( 0, 0 )
 
--- Configure image sheet
-local sheetOptions =
-{
-    frames =
-    {
-        {   -- 1) asteroid 1
-            x = 0,
-            y = 0,
-            width = 102,
-            height = 85
-        },
-        {   -- 2) asteroid 2
-            x = 0,
-            y = 85,
-            width = 90,
-            height = 83
-        },
-        {   -- 3) asteroid 3
-            x = 0,
-            y = 168,
-            width = 100,
-            height = 97
-        },
-        {   -- 4) ship
-            x = 0,
-            y = 265,
-            width = 98,
-            height = 79
-        },
-        {   -- 5) laser
-            x = 98,
-            y = 265,
-            width = 14,
-            height = 40
-        },
-    },
-}
-local objectSheet = graphics.newImageSheet( "gameObjects.png", sheetOptions )
-
 -- Load ship sheet file
 local shipSheetInfo = require("graphics.shipsheet")
 local shipSheet = graphics.newImageSheet( "graphics/shipsheet.png", shipSheetInfo:getSheet() )
@@ -94,7 +55,6 @@ local shipSequence =
 -- Load asteroids sheet file
 local asteroidsSheetInfo = require("graphics.asteroidssheet")
 local asteroidsSheet = graphics.newImageSheet( "graphics/asteroidssheet.png", asteroidsSheetInfo:getSheet() )
-
 
 -- Create asteroids animations
 local asteroidsSequence =
@@ -152,6 +112,9 @@ local explosionSequence =
 	},	
 }
 
+-- Load laser sheet
+local sheetLaserInfo = require("graphics.laser")
+local laserSheet = graphics.newImageSheet( "graphics/laser1.png", sheetLaserInfo:getSheet() )
 
 -- Debug mod --> set up in main.lua
 local isDebug = composer.getVariable("isDebug")
@@ -182,6 +145,7 @@ local isMove = false		-- Is ship move
 local gameLoopTimer			-- General game loop
 local newAsteroid			-- Temp variable for creating new asteroids
 local shipExplosion			-- Ship explosion sprite
+local laserImpulse			-- Laser shoot sprite
 
 -- Variables for text objects
 local livesText
@@ -212,6 +176,7 @@ local musicTrack
 local startSound
 local bonusSound
 local bonus2Sound
+local clickSound
 
 -- Use controller code by trevornmarshall URL: https://github.com/trevornmarshall/virtual_controller/
 local factory = require("controller.virtual_controller_factory")
@@ -375,10 +340,11 @@ local function fireLaser()
 		end
 		
 
-		local newLaser = display.newImageRect( mainGroup, objectSheet, 5, 14, 40 )
-		physics.addBody( newLaser, "dynamic", { isSensor=true } )
-		newLaser.isBullet = true
-		newLaser.myName = "laser"
+		local laserImpulse = display.newImageRect( mainGroup, laserSheet, 4, 20, 35 )
+		-- mainGroup:insert( laserImpulse )
+		physics.addBody( laserImpulse, "dynamic", { isSensor=true } )
+		laserImpulse.isBullet = true
+		laserImpulse.myName = "laser"
 		
 		laserCount = laserCount + 1
 		if ( isDebug == true ) then
@@ -387,12 +353,12 @@ local function fireLaser()
 			print( ship.x, ship.y )
 		end
 		
-		newLaser.x = ship.x
-		newLaser.y = ship.y
-		newLaser:toBack()
+		laserImpulse.x = ship.x
+		laserImpulse.y = ship.y
+		laserImpulse:toBack()
 
-		transition.to( newLaser, { y=-40, time=500,
-			onComplete = function() display.remove( newLaser ) end
+		transition.to( laserImpulse, { y=-40, time=500,
+			onComplete = function() display.remove( laserImpulse ) end
 		} )
 		
 	end
@@ -432,11 +398,13 @@ end
 
 -- Function for display popup message while gaming
 local function popupMessage ( message )
-	if( popupMessageText ) then
-		popupMessageText.text = message
-	else
-		popupMessageText = display.newText( message, display.contentCenterX, display.contentCenterY, native.systemFont, 62 )
-		timer.performWithDelay( 1500, removePopupMessage, 1)
+	if ( isPaused == false or died == false ) then
+		if( popupMessageText ) then
+			popupMessageText.text = message
+		else
+			popupMessageText = display.newText( message, display.contentCenterX, display.contentCenterY, native.systemFont, 62 )
+			timer.performWithDelay( 1500, removePopupMessage, 1)
+		end
 	end
 end
 
@@ -483,6 +451,7 @@ local function restoreShip()
 	ship.isBodyActive = false
 	ship.x = display.contentCenterX
 	ship.y = display.contentHeight - 100
+	shipIdle()
 
 	-- Fade in the ship
 	transition.to( ship, { alpha=1, time=4000,
@@ -693,12 +662,13 @@ end
 
 -- Just exit
 local function exitGame()
+	audio.play( clickSound, { channel = 4 } )
 	composer.gotoScene ( "menu" )
 end
 
 -- Restart game function
 local function restartGame()
-	local game = composer.getSceneName( "current" )
+	audio.play( clickSound, { channel = 4 } )
 	
 	restartButton:removeEventListener( "tap", restartGame )
 	restartButton:removeSelf()
@@ -712,6 +682,7 @@ end
 
 -- Resume game after pause
 local function resumeGame()
+	audio.play( clickSound, { channel = 4 } )
 	timer.resume( gameLoopTimer )
 	physics.start()
 	Runtime:addEventListener( "enterFrame", checkShipPosition )
@@ -736,6 +707,7 @@ end
 -- Pause game
 local function pauseGame()
 	
+	audio.play( clickSound, { channel = 4 } )
 	timer.pause( gameLoopTimer )
 	physics.pause()
 	Runtime:removeEventListener( "enterFrame", checkShipPosition )
@@ -804,6 +776,17 @@ local function setupController(displayGroup)
 	
 end
 
+-- Listen device keys
+local function onKeyEvent ( event )
+	if( event.keyName == "back" ) then
+		if( system.getInfo("platform") == "Android" ) then
+			pauseGame()
+			return true
+		end
+	end
+	return false
+end
+
 -- -----------------------------------------------------------------------------------
 -- Scene event functions
 -- -----------------------------------------------------------------------------------
@@ -842,6 +825,7 @@ function scene:create( event )
 	tintback:setFillColor( 0, 0, 0, 0.65 )
 	
 	ship = display.newSprite( shipSheet , shipSequence )
+	mainGroup:insert( ship )
 	ship:setFillColor( 1, 1, 1, 0.92 )
 	ship.x = display.contentCenterX
 	ship.y = display.contentHeight - 100
@@ -865,12 +849,19 @@ function scene:create( event )
 	pauseButton:addEventListener( "tap", pauseGame )	
 
 	-- Load audio
-	explosionSound = audio.loadSound( "audio/explosion.wav" )
-	fireSound = audio.loadSound( "audio/fire.wav" )
-	musicTrack = audio.loadStream( "audio/80s-Space-Game_Looping.wav" )
+	explosionSound = audio.loadSound( "audio/162792__timgormly__8-bit-explosion1.wav" )
+	fireSound = audio.loadSound( "audio/8-bit-laser.mp3" )
+	musicTrack =
+	{
+		audio.loadStream( "audio/240376__edtijo__happy-8bit-pixel-adenture.mp3" ),
+		audio.loadStream( "audio/268798__frankum__electronic-music-intro.mp3" )
+	}
+	print( musicTrack[1] )
 	startSound = audio.loadSound( "audio/start-engine.wav" )
 	bonusSound = audio.loadSound( "audio/power-up.wav" )
 	bonus2Sound = audio.loadSound( "audio/bonus-pickup.wav" )
+	clickSound = audio.loadSound( "audio/button-click.wav" )
+
 end
 
 
@@ -895,12 +886,13 @@ function scene:show( event )
 		physics.start()
 		Runtime:addEventListener( "collision", onCollision )
 		Runtime:addEventListener( "enterFrame", checkShipPosition )
+		Runtime:addEventListener( "key", onKeyEvent )
 		gameLoopTimer = timer.performWithDelay( 500, gameLoop, 0 )
 		-- Get system time
 		timeTable = os.time()
 		-- Start the music!
-		-- audio.play( startSound, { channel=4 } )
-		audio.play( musicTrack, { channel=1, loops=-1 } )
+		audio.play( startSound, { channel=4 } )
+		audio.play( musicTrack[math.random( 1, 2 )], { channel=1, loops=-1 } )
 	end
 end
 

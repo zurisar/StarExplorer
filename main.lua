@@ -12,7 +12,7 @@ local json = require( "json" )
 composer.setVariable( "gameRestart", false)
 
 -- Debug mod true/false
-local isDebug = true
+local isDebug = false
 
 if (isDebug == true) then
 	composer.setVariable("isDebug", true)

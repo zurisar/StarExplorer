@@ -16,6 +16,7 @@ local isDebug = composer.getVariable("isDebug")
 local filePath = system.pathForFile( "settings.json", system.DocumentsDirectory )
 
 local musicTrack
+local clickSound
 
 local musicVolumeText
 local musicVolumeSlider
@@ -46,6 +47,7 @@ local function saveSettings()
 end
 
 local function gotoMenu()
+	audio.play( clickSound, { channel = 4 } )
 	saveSettings()
 	composer.gotoScene( "menu", { time=800, effect="crossFade" } )
 end
@@ -114,8 +116,9 @@ function scene:create( event )
 	local menuButton = display.newText( sceneGroup, "Menu", display.contentCenterX, 920, native.systemFont, 44 )
 	menuButton:setFillColor( 0.75, 0.78, 1 )
 	menuButton:addEventListener( "tap", gotoMenu )
-
-	musicTrack = audio.loadStream( "audio/270366__foolboymedia__dramatic-scroller.mp3" )
+	
+	clickSound = audio.loadSound( "audio/button-click.wav" )
+	musicTrack = audio.loadStream( "audio/189578__zagi2__falling-birds-perc-loop.mp3" )
 end
 
 

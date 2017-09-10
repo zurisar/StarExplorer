@@ -16,6 +16,7 @@ local scoresTable = {}
 local filePath = system.pathForFile( "scores.json", system.DocumentsDirectory )
 
 local musicTrack
+local clickSound
 
 
 local function loadScores()
@@ -50,6 +51,7 @@ end
 
 
 local function gotoMenu()
+	audio.play( clickSound, { channel = 4 } )
 	composer.gotoScene( "menu", { time=800, effect="crossFade" } )
 end
 
@@ -122,7 +124,8 @@ function scene:create( event )
 	menuButton:setFillColor( 0.75, 0.78, 1 )
 	menuButton:addEventListener( "tap", gotoMenu )
 
-	musicTrack = audio.loadStream( "audio/270366__foolboymedia__dramatic-scroller.mp3" )
+	clickSound = audio.loadSound( "audio/button-click.wav" )
+	musicTrack = audio.loadStream( "audio/208520__frankum__electro-pop-01-loop.mp3" )
 end
 
 
