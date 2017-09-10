@@ -51,10 +51,9 @@ local sheetOptions =
 }
 local objectSheet = graphics.newImageSheet( "gameObjects.png", sheetOptions )
 
--- Load sheep sheet file
-local sheetInfo = require("graphics.shipsheet")
-local shipSheet = graphics.newImageSheet( "graphics/shipsheet1.png", sheetInfo:getSheet() )
--- local shipSprite = display.newSprite( shipSheet , {frames={sheetInfo:getFrameIndex("sprite")}} )
+-- Load ship sheet file
+local shipSheetInfo = require("graphics.shipsheet")
+local shipSheet = graphics.newImageSheet( "graphics/shipsheet.png", shipSheetInfo:getSheet() )
 
 -- Create ship animations
 local shipSequence = 
@@ -92,6 +91,68 @@ local shipSequence =
 	},
 }
 
+-- Load asteroids sheet file
+local asteroidsSheetInfo = require("graphics.asteroidssheet")
+local asteroidsSheet = graphics.newImageSheet( "graphics/asteroidssheet.png", asteroidsSheetInfo:getSheet() )
+
+
+-- Create asteroids animations
+local asteroidsSequence =
+{
+	{
+		name = "asteroid1",
+		start = 1,
+		count = 15,
+		time=2000
+	},
+	{
+		name = "asteroid2",
+		start = 17,
+		count = 15,
+		time=2000
+	},
+	{
+		name = "asteroid3",
+		start = 33,
+		count = 15,
+		time=2000
+	},
+	{
+		name = "asteroid4",
+		start = 49,
+		count = 15,
+		time=2000
+	},
+	{
+		name = "asteroid5",
+		start = 65,
+		count = 15,
+		time=2000
+	},
+	{
+		name = "asteroid6",
+		start = 81,
+		count = 15,
+		time=2000
+	},
+}
+
+-- Load explosion sheet
+local explosionSheetInfo = require("graphics.explosion")
+local explosionSheet = graphics.newImageSheet( "graphics/explosion.png", explosionSheetInfo:getSheet() )
+
+local explosionSequence = 
+{
+	{
+		name = "explosion",
+		start = "1",
+		count = "16",
+		time = 2000,
+		loopCount = 1,
+	},	
+}
+
+
 -- Debug mod --> set up in main.lua
 local isDebug = composer.getVariable("isDebug")
 if (isDebug == true) then
@@ -119,10 +180,8 @@ local ship 					-- Player's ship
 local moveDirection			-- Where to ship move
 local isMove = false		-- Is ship move
 local gameLoopTimer			-- General game loop
-local moveLeftArea
-local moveRightArea
-local fireArea
-local shipSpeedUpTimer
+local newAsteroid			-- Temp variable for creating new asteroids
+local shipExplosion			-- Ship explosion sprite
 
 -- Variables for text objects
 local livesText
@@ -154,6 +213,15 @@ local startSound
 local bonusSound
 local bonus2Sound
 
+-- Use controller code by trevornmarshall URL: https://github.com/trevornmarshall/virtual_controller/
+local factory = require("controller.virtual_controller_factory")
+local controller = factory:newController()
+
+system.activate("multitouch")
+
+local js1 -- Joystick
+local jsButton -- Fire button
+
 -- Load settings
 local musicVolume = composer.getVariable("musicVolume")
 local soundVolume = composer.getVariable("soundVolume")
@@ -166,6 +234,11 @@ if ( isDebug == true ) then
 	print( "In game ettings set to global; musicVolume: " .. musicVolume ..", soundVolume: " .. soundVolume .. " and difficulty: " .. difficulty )
 end
 
+local function donothing()
+	-- just nothing to do
+	-- I use it for onButtonUp
+end
+
 -- Set ship animation to 'idle'
 local function shipIdle ( event )
 	if(died) then
@@ -176,42 +249,32 @@ local function shipIdle ( event )
 	end
 end
 
--- Play different ship animations
-local function shipMove( direction, back )
-	if(died) then
-		return
-	else
-		if( direction == "left" and back == nil ) then
-			if( isMove == false ) then
-				ship:setSequence( "moveLeft" )
+-- Move ship with animations
+local function moveShip( self, x, y )
+	if( isPause == false or died == false ) then
+		if( x < 0 ) then
+			isMove = true
+			ship:setLinearVelocity( x, y )
+			ship:setSequence( "moveLeft")
+			ship:play()
+			moveDirection = "Left"
+		elseif( x > 0 ) then
+			isMove = true
+			ship:setLinearVelocity( x, y )
+			ship:setSequence( "moveRight" )
+			ship:play()
+			moveDirection = "Right"
+		elseif( x == 0 ) then
+			isMove = false
+			ship:setLinearVelocity( 0, 0 )
+			if( moveDirection ) then
+				ship:setSequence( "back" .. moveDirection )
 				ship:play()
 			end
-			if( isDebug == true ) then
-				print("Move left!")
-			end
-		elseif( direction == "right" and back == nil ) then
-			if( isMove == false ) then
-				ship:setSequence( "moveRight" )
-				ship:play()
-			end
-			if( isDebug == true ) then
-				print("Move right!")
-			end
-		elseif( direction == "left" and back == true ) then
-			ship:setSequence( "backLeft" )
-			ship:play()
 			timer.performWithDelay( 100, shipIdle, 1 )
-			if( isDebug == true ) then
-				print("Move back left!")
-			end
-		elseif( direction == "right" and back == true ) then
-			ship:setSequence( "backRight" )
-			ship:play()
-			timer.performWithDelay( 100, shipIdle, 1 )
-			if( isDebug == true ) then
-				print("Move back left!")
-			end
 		end
+	else
+		return false
 	end
 end
 
@@ -238,13 +301,17 @@ local function createAsteroid()
 		asteroidCountText.text = "Asteroids qty: " .. asteroidCount
 	end
 	
-	local newAsteroid = display.newImageRect( mainGroup, objectSheet, 1, 102, 85 )
+		newAsteroid = display.newSprite( asteroidsSheet, asteroidsSequence )
+		mainGroup:insert(newAsteroid)
+		newAsteroid:scale( 2, 2 )
+		--newAsteroid = display.newImageRect( mainGroup, objectSheet, 1, 102, 85 )
+	
 	
 	if ( asteroidCount == 10 and newliveCount ~= 100) then
 		asteroidCount = 0
 		newAsteroid:setFillColor( 0.1, 0.9, 0.9, 0.78 )
 		table.insert( asteroidsTable, newAsteroid )
-		physics.addBody( newAsteroid, "dynamic", { radius=30, bounce=0.8 * difficulty } )
+		physics.addBody( newAsteroid, "dynamic", { radius=20, bounce=0.8 * difficulty } )
 		newAsteroid.myName = "asteroidred"
 		if ( isDebug == true ) then
 			print( "Spawn red asteroid" )
@@ -255,7 +322,7 @@ local function createAsteroid()
 		asteroidCount = 0 -- Reset asteroidCount also, because it equal to 10 anyway and we don't need double spawn
 		newAsteroid:setFillColor( 0.9, 0.1, 0.9, 0.78 )
 		table.insert( asteroidsTable, newAsteroid )
-		physics.addBody( newAsteroid, "dynamic", { radius=30, bounce=0.8 * difficulty } )
+		physics.addBody( newAsteroid, "dynamic", { radius=20, bounce=0.8 * difficulty } )
 		newAsteroid.myName = "asteroidgreen"
 		
 		if( isDebug == true ) then
@@ -264,7 +331,7 @@ local function createAsteroid()
 	
 	else
 		table.insert( asteroidsTable, newAsteroid )
-		physics.addBody( newAsteroid, "dynamic", { radius=40, bounce=0.8 * difficulty } )
+		physics.addBody( newAsteroid, "dynamic", { radius=30, bounce=0.8 * difficulty } )
 		newAsteroid.myName = "asteroid"
 	end
 
@@ -289,11 +356,14 @@ local function createAsteroid()
 
 	newAsteroid:applyTorque( math.random( -6,6 ) * difficulty )
 	
+	newAsteroid:setSequence( "asteroid" .. math.random( 1, 6 ) )
+	newAsteroid:play()
+	
 end
 
 -- Fire!
 local function fireLaser()
-	if ( isPaused == true ) then
+	if ( isPaused == true or died == true ) then
 		return false
 	else
 		-- Lets clear audio channel
@@ -332,6 +402,7 @@ end
 -- Check ship position every frame, if it too far away reset speed and X.pos to screen edge
 local function checkShipPosition( event )
 	local x, y = ship.x, ship.y
+	-- print (x, y) -- It's also debug feature, but we comment it and not use if, 60 times in second too much 
 	if ( isPause == true or died == true ) then
 		return false
 	else
@@ -341,126 +412,17 @@ local function checkShipPosition( event )
 		elseif ( x > 674 ) then
 			ship:setLinearVelocity( 0, 0)
 			ship.x = 674
+		elseif ( y < 100 ) then
+			ship:setLinearVelocity( 0, 0)
+			ship.y = 100
+		elseif ( y > 1035 ) then
+			ship:setLinearVelocity( 0, 0)
+			ship.y = 1035
 		end
 	end
 end
 
--- Make some speedup for our ship
-local function speedupShipMove( event )
-	if( isPause == false or died == false ) then
-		local velocityx, velocityy = ship:getLinearVelocity()
-		ship:setLinearVelocity( velocityx * 1.2, velocityy )
-	end
-end
-
--- Move ship to the left
-local function moveShipLeft( event )
-	
-	if( isPaused == true or died == true ) then
-		return false
-	else
-		if( event.phase == "began" ) then
-			ship:setLinearVelocity( -50, 0 )
-			shipMove( "left" )
-			shipSpeedUpTimer = timer.performWithDelay( 100, speedupShipMove, 0 )
-		elseif( event.phase == "moved" ) then
-		elseif( event.phase == "ended" or event.phase == "cancelled" ) then
-			if ( shipSpeedUpTimer ) then
-				timer.cancel( shipSpeedUpTimer )
-				shipSpeedUpTimer = nil
-			end
-			ship:setLinearVelocity( 0, 0 )
-			shipMove( "left", true )
-		end
-		return true
-	end
-end
-
--- Move ship to the right
-local function moveShipRight( event )
-
-	if( isPaused == true or died == true ) then
-		return false
-	else
-		if( event.phase == "began" ) then
-			ship:setLinearVelocity( 50, 0 )
-			shipMove( "right" )
-			shipSpeedUpTimer = timer.performWithDelay( 100, speedupShipMove, 0 )
-		elseif( event.phase == "moved" ) then
-		elseif( event.phase == "ended" or event.phase == "cancelled" ) then
-			if ( shipSpeedUpTimer ) then
-				timer.cancel( shipSpeedUpTimer )
-				shipSpeedUpTimer = nil
-			end
-			ship:setLinearVelocity( 0, 0 )
-			shipMove( "right", true )
-		end
-		return true
-	end
-
-end
-
--- Old unused function
-local function dragShip( event )
-
-	if ( isPaused == true ) then
-		
-		return false
-		
-	else
-
-		local ship = event.target
-		local phase = event.phase
-
-		if ( "began" == phase ) then
-		
-			
-			-- Set touch focus on the ship
-			display.currentStage:setFocus( ship )
-			-- Store initial offset position
-			ship.touchOffsetX = event.x - ship.x
-			
-			
-
-		elseif ( "moved" == phase ) then
-			
-			--if( isDebug == true ) then
-			--	print( "ship.x: " .. ship.x .. ", event.x: " .. event.x .. ", ship.touchOffsetX: " .. ship.touchOffsetX )
-			--end
-			-- Move the ship to the new touch position
-			ship.x = event.x - ship.touchOffsetX
-			
-			if( event.x > event.xStart) then
-				shipMove( "right" )
-				moveDirection = "right"
-				isMove = true
-			elseif( event.x < event.xStart ) then
-				shipMove( "left" )
-				moveDirection = "left"
-				isMove = true
-			end
-			
-			
-
-		elseif ( "ended" == phase or "cancelled" == phase ) then
-		print("end move")
-			if( moveDirection == "left" ) then
-				shipMove( "left", true )
-				isMove = false
-			elseif( moveDirection == "right" ) then 
-				shipMove( "right", true )
-				isMove = false
-			end
-			print( moveDirection )
-			-- Release touch focus on the ship
-			display.currentStage:setFocus( nil )
-		end
-
-		return true  -- Prevents touch propagation to underlying objects
-	
-	end
-end
-
+-- We need to remove popup message from screen
 local function removePopupMessage ()
 	if( popupMessageText ) then
 		popupMessageText:removeSelf()
@@ -468,6 +430,7 @@ local function removePopupMessage ()
 	end
 end
 
+-- Function for display popup message while gaming
 local function popupMessage ( message )
 	if( popupMessageText ) then
 		popupMessageText.text = message
@@ -532,11 +495,16 @@ end
 
 -- Game is over
 local function endGame()
+	-- Try to remove popup
+	removePopupMessage()
+	-- Remove explosion sprite
+	shipExplosion:removeSelf()
+	shipExplosion = nil
 	-- Let's get some statisctis
-	local totalShots = laserCount
-	local totalHits = hitCount
-	local totalAccuracy = 0
-	local totalDifficulty = difficulty
+	local totalShots 		= laserCount
+	local totalHits 		= hitCount
+	local totalAccuracy 	= 0
+	local totalDifficulty 	= difficulty
 	
 	if( totalShots > 0 ) then
 		totalAccuracy = math.floor( totalHits / ( totalShots / 100 ) )
@@ -544,9 +512,10 @@ local function endGame()
 	
 	-- Stop game loop; asteroids will fly and collision, but will not spawn anymore
 	timer.cancel( gameLoopTimer )
+	-- Also stop detect ship position, we don't need it anymore
+	Runtime:removeEventListener( "enterFrame", checkShipPosition )
 	
 	-- Calculate time
-	-- local totalTime = timeCount / 60
 	local currentTime = os.time()
 	totalTime = os.difftime( currentTime, timeTable )
 	
@@ -562,9 +531,6 @@ local function endGame()
 	looserText = nil
 	-- Show stats
 	composer.showOverlay ( "stats", { isModal=true, time=400, effect="fade" } )
-	
-
-	-- composer.gotoScene( "highscores", { time=800, effect="crossFade" } )
 end
 
 -- Choose sound for different asteroid types and additional 'bonus'
@@ -605,6 +571,7 @@ local function playExplodeSound( asteroidType )
 	end
 end
 
+-- Detect collisions, reward player, count lives
 local function onCollision( event )
 
 	if ( event.phase == "began" ) then
@@ -705,7 +672,14 @@ local function onCollision( event )
 				livesText.text = "Lives: " .. lives
 
 				if ( lives == 0 ) then
+					removePopupMessage()
 					looserText = display.newText( uiGroup, "Looser!", display.contentCenterX, display.contentCenterY, native.systemFont, 62 )
+					shipExplosion = display.newSprite( explosionSheet, explosionSequence )
+					mainGroup:insert(shipExplosion)
+					shipExplosion.x = ship.x
+					shipExplosion.y = ship.y
+					shipExplosion:setSequence( "explosion" )
+					shipExplosion:play()
 					display.remove( ship )
 					timer.performWithDelay( 2000, endGame )
 				else
@@ -740,6 +714,7 @@ end
 local function resumeGame()
 	timer.resume( gameLoopTimer )
 	physics.start()
+	Runtime:addEventListener( "enterFrame", checkShipPosition )
 	isPaused = false
 	
 	resumeButton:removeEventListener( "tap", resumeGame )
@@ -763,6 +738,7 @@ local function pauseGame()
 	
 	timer.pause( gameLoopTimer )
 	physics.pause()
+	Runtime:removeEventListener( "enterFrame", checkShipPosition )
 	isPaused = true
 	
 	tintPause = display.newRoundedRect ( uiGroup, display.contentCenterX, display.contentCenterY, 400, 300, 25 )
@@ -790,6 +766,44 @@ function changePauseButtonState ( state )
 	end
 end
 
+-- Controllers setup
+local function setupController(displayGroup)
+	local js1Properties = {
+		nToCRatio = 0.5,	
+		radius = 60, 
+		x = 200, 
+		y = display.contentHeight - 100, 
+		restingXValue = 0, 
+		restingYValue = 0, 
+		rangeX = 200, 
+		rangeY = 200,
+		touchHandler = {
+			onTouch = moveShip
+		}
+	}
+
+	local js1Name = "js1"
+	js1 = controller:addJoystick(js1Name, js1Properties)
+
+	local jsButtonProperties = {
+		text = "F",	
+		radius = 50, 
+		x = display.contentWidth - 200, 
+		y = display.contentHeight - 100, 
+		eventHandler = {
+			onButtonDown = fireLaser,
+			onButtonUp = donothing,
+				
+		}
+	}
+	
+	local jsButtonName = "jsButton"
+	jsButton = controller:addButton(jsButtonName, jsButtonProperties)
+
+	controller:displayController(displayGroup)
+	
+end
+
 -- -----------------------------------------------------------------------------------
 -- Scene event functions
 -- -----------------------------------------------------------------------------------
@@ -815,6 +829,8 @@ function scene:create( event )
 	uiGroup = display.newGroup()    -- Display group for UI objects like the score
 	sceneGroup:insert( uiGroup )    -- Insert into the scene's view group
 	
+	setupController(uiGroup)
+	
 	-- Load the background
 	local background = display.newImageRect( backGroup, "graphics/background" .. randomBackground() .. ".png", 800, 1400 )
 	background.x = display.contentCenterX
@@ -825,26 +841,14 @@ function scene:create( event )
 	local tintback = display.newRoundedRect( uiGroup, display.contentCenterX, display.contentCenterY - 500, 600, 200, 0 )
 	tintback:setFillColor( 0, 0, 0, 0.65 )
 	
-	-- Create control areas
-	moveLeftArea = display.newRect( controlGroup, display.contentCenterX / 2, display.contentCenterY + 500, 200, 400 )
-	if( isDebug == true ) then
-		moveLeftArea:setFillColor( 0, 0, 0, 0.15 )
-	end
-	moveRightArea = display.newRect( controlGroup, display.contentCenterX + display.contentCenterX / 2, display.contentCenterY + 500, 200, 400 )
-	if( isDebug == true ) then
-		moveRightArea:setFillColor( 0, 0, 0, 0.15 )
-	end
-	fireArea = display.newRect( controlGroup, display.contentCenterX, display.contentCenterY + 500, 200, 400 )
-	if( isDebug == true ) then
-		fireArea:setFillColor( 0, 0, 0, 0.15 )
-	end
-	
 	ship = display.newSprite( shipSheet , shipSequence )
 	ship:setFillColor( 1, 1, 1, 0.92 )
 	ship.x = display.contentCenterX
 	ship.y = display.contentHeight - 100
 	physics.addBody( ship, { radius=30, isSensor=true } )
 	ship.myName = "ship"
+	
+	
 	
 	pauseButton = display.newText ( uiGroup, "Pause", display.contentCenterX + 200, 80, native.systemFont, 36 )
 	
@@ -858,17 +862,9 @@ function scene:create( event )
 		loopCountText = display.newText( uiGroup, "Loops: " .. loopCount, 400, 180, native.systemFont, 32 )
 	end
 	
-	pauseButton:addEventListener( "tap", pauseGame )
-	
-	-- ship:addEventListener( "tap", fireLaser )
-	-- ship:addEventListener( "touch", dragShip )
-	
-	moveLeftArea:addEventListener( "touch", moveShipLeft )
-	moveRightArea:addEventListener( "touch", moveShipRight )
-	fireArea:addEventListener( "tap", fireLaser )
-	-- fireArea:addEventListener( "touch", fireRapidLaser )
-	Runtime:addEventListener( "enterFrame", checkShipPosition )
+	pauseButton:addEventListener( "tap", pauseGame )	
 
+	-- Load audio
 	explosionSound = audio.loadSound( "audio/explosion.wav" )
 	fireSound = audio.loadSound( "audio/fire.wav" )
 	musicTrack = audio.loadStream( "audio/80s-Space-Game_Looping.wav" )
@@ -898,6 +894,7 @@ function scene:show( event )
 		-- Code here runs when the scene is entirely on screen
 		physics.start()
 		Runtime:addEventListener( "collision", onCollision )
+		Runtime:addEventListener( "enterFrame", checkShipPosition )
 		gameLoopTimer = timer.performWithDelay( 500, gameLoop, 0 )
 		-- Get system time
 		timeTable = os.time()
@@ -921,6 +918,7 @@ function scene:hide( event )
 	elseif ( phase == "did" ) then
 		-- Code here runs immediately after the scene goes entirely off screen
 		Runtime:removeEventListener( "collision", onCollision )
+		Runtime:removeEventListener( "enterFrame", checkShipPosition )
 		physics.pause()
 		-- Stop the music!
 		audio.stop( 1 )
